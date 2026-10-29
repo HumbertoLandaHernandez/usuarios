@@ -4,7 +4,7 @@
 proyecto/
 ├── docker-compose.yml   # PostgreSQL 16 (ejecuta /database al crear el volumen)
 ├── database/            # 01_schema.sql (esquema "Sistema") y 02_seed.sql (datos iniciales)
-├── backend/             # NestJS (puerto 3001) – TypeORM, Passport JWT, bcrypt
+├── backend/             # NestJS (puerto 3001) – Prisma, Passport JWT, bcrypt
 └── frontend/            # Next.js (puerto 3000) – App Router, Server Actions, cookie httpOnly
 ```
 
@@ -54,17 +54,49 @@ Las páginas a las que accede un usuario salen de:
 |--------|------------------|--------|-------------------------------|
 | POST   | /auth/login      | –      | `{ usuario, password }`       |
 | GET    | /auth/profile    | Bearer | –                             |
+| GET    | /usuarios        | Bearer + página `/usuarios` | –        |
+| POST   | /usuarios        | Bearer + página `/usuarios` | ver abajo |
 
 `usuario` es `UsuarioDesc` (sin distinguir mayúsculas). El login devuelve `{ access_token }`.
 `/auth/profile` devuelve el usuario con `Rol`, `Permiso`, `Nombre`, `PaginaHome` y `Paginas`.
 
-Para proteger cualquier ruta nueva:
+### Crear usuario: `POST /usuarios`
+
+```json
+{
+  "usuario": "jperez",
+  "password": "MiClave123",
+  "nombre": "Juan Pérez López",
+  "rolId": 2,
+  "permisoId": 1,
+  "paginaHomeId": 1,
+  "permisosPaginasId": 2
+}
+```
+
+- `paginaHomeId` y `permisosPaginasId` son opcionales: si no se envían se toman del rol.
+- La contraseña se guarda con bcrypt: `genSalt(10)` crea un salt aleatorio que queda **dentro** del hash
+  (`$2b$10$<22 caracteres de salt><hash>`), así que no hace falta una columna aparte.
+- Se crea también el `NombrePersonal`, en la misma transacción.
+- `UsuarioUsys` y `NombrePersonalUsys` se llenan con el usuario que hizo la petición.
+- Respuestas: `201` creado, `409` usuario repetido, `400` datos inválidos o rol/permiso/página inexistente, `403` sin la página `/usuarios`.
+
+### Proteger rutas
 
 ```ts
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PaginaGuard)
+@RequierePagina('/roles')        // exige esa página entre las permitidas del usuario
 @Get('algo')
-algo(@CurrentUser() usuario: Usuario) { ... }
+algo(@CurrentUser() usuario: Perfil) { ... }
 ```
+
+## Prisma
+
+- El cliente se genera solo con `npm install` (`postinstall`) en `backend/src/generated/prisma` (no se sube a git).
+- `backend/prisma/schema.prisma` se obtiene **de la base** con `npx prisma db pull`. Las tablas se cambian en
+  `database/*.sql` y luego se ejecuta `npm run prisma:pull` (no se usa `prisma migrate`).
+- El hash nunca sale en las consultas: `PrismaService` omite `Contrasena` por defecto.
+- Versión fijada a Prisma 7.10: `npm i prisma` sin versión puede instalar una 8.x en pruebas.
 
 ## Flujo de autenticación
 
@@ -77,5 +109,5 @@ algo(@CurrentUser() usuario: Usuario) { ... }
 ## Antes de producción
 
 - Cambia `JWT_SECRET` por un valor largo y aleatorio.
-- `Contraseña` guarda un hash bcrypt. Si migras usuarios desde SQL Server con contraseñas en texto plano, hay que hashearlas.
+- `Contraseña` guarda un hash bcrypt (con su salt). Si migras usuarios desde SQL Server con contraseñas en texto plano, hay que hashearlas.
 - Considera añadir refresh tokens si necesitas sesiones largas.

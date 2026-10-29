@@ -1,0 +1,151 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+// Generado con `npx prisma db pull` desde el esquema que crean los scripts de /database.
+// Las tablas se cambian en esos scripts (no con prisma migrate) y luego se repite `db pull`.
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["Sistema"]
+}
+
+model ListaPagina {
+  ListaPaginaUsys       String                @default(dbgenerated("CURRENT_USER")) @db.VarChar(50)
+  ListaPaginaRV         Int                   @default(1)
+  ListaPaginaId         Int                   @id @default(autoincrement()) @db.SmallInt
+  ListaPaginaDesc       String                @db.VarChar(50)
+  ListaPaginaComentario String                @db.VarChar(500)
+  ListaPaginaElemento   ListaPaginaElemento[]
+  PermisoLista          PermisoLista[]
+
+  @@schema("Sistema")
+}
+
+model ListaPaginaElemento {
+  ListaPaginaElementoUsys String      @default(dbgenerated("CURRENT_USER")) @db.VarChar(309)
+  ListaPaginaElementoRV   Int         @default(1)
+  ListaPaginaId           Int         @db.SmallInt
+  PaginaId                Int         @db.SmallInt
+  ListaPagina             ListaPagina @relation(fields: [ListaPaginaId], references: [ListaPaginaId], onDelete: NoAction, onUpdate: NoAction)
+  Pagina                  Pagina      @relation(fields: [PaginaId], references: [PaginaId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([ListaPaginaId, PaginaId])
+  @@schema("Sistema")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model NombreBase {
+  NombreBaseUsys String        @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  NombreBaseDT   DateTime      @default(now()) @db.Timestamp(6)
+  NombreBaseId   Int           @id @default(autoincrement())
+  NombreBaseDesc String        @db.VarChar(50)
+  NombreLista    NombreLista[]
+
+  @@schema("Sistema")
+}
+
+model NombreLista {
+  NombreListaUsys  String         @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  NombreListaRV    Int            @default(1)
+  NombrePersonalId Int
+  NombreTipoId     Int            @db.SmallInt
+  NombreBaseId     Int
+  NombreBase       NombreBase     @relation(fields: [NombreBaseId], references: [NombreBaseId], onDelete: NoAction, onUpdate: NoAction)
+  NombrePersonal   NombrePersonal @relation(fields: [NombrePersonalId], references: [NombrePersonalId], onDelete: NoAction, onUpdate: NoAction)
+  NombreTipo       NombreTipo     @relation(fields: [NombreTipoId], references: [NombreTipoId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([NombrePersonalId, NombreTipoId])
+  @@schema("Sistema")
+}
+
+model NombrePersonal {
+  NombrePersonalUsys String        @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  NombrePersonalRV   Int           @default(1)
+  NombrePersonalId   Int           @id @default(autoincrement())
+  NombrePersonalDesc String        @db.VarChar(150)
+  NombreLista        NombreLista[]
+  Usuario            Usuario[]
+
+  @@schema("Sistema")
+}
+
+model NombreTipo {
+  NombreTipoUsys String        @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  NombreTipoRV   Int           @default(1)
+  NombreTipoId   Int           @id @default(autoincrement()) @db.SmallInt
+  NombreTipoDesc String        @db.VarChar(50)
+  NombreLista    NombreLista[]
+
+  @@schema("Sistema")
+}
+
+model Pagina {
+  PaginaUsys          String                @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  PaginaDT            DateTime              @default(now()) @db.Timestamp(6)
+  PaginaId            Int                   @id @default(autoincrement()) @db.SmallInt
+  PaginaDesc          String                @db.VarChar(50)
+  Descripcion         String                @db.VarChar(150)
+  ListaPaginaElemento ListaPaginaElemento[]
+  Rol                 Rol[]
+  Usuario             Usuario[]
+
+  @@schema("Sistema")
+}
+
+model Permiso {
+  PermisosUsys Int
+  PermisosRV   Int       @default(1)
+  PermisoId    Int       @id @default(autoincrement()) @db.SmallInt
+  PermisoDesc  String    @db.VarChar(50)
+  Usuario      Usuario[]
+
+  @@schema("Sistema")
+}
+
+model PermisoLista {
+  PermisoListaUsys     String      @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  PermisoListaRV       Int         @default(1)
+  PermisoListaId       Int
+  PermisoListaPaginaId Int
+  ListaPagina          ListaPagina @relation(fields: [PermisoListaPaginaId], references: [ListaPaginaId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([PermisoListaId, PermisoListaPaginaId])
+  @@schema("Sistema")
+}
+
+model Rol {
+  RolUsys         String    @default(dbgenerated("CURRENT_USER")) @db.VarChar(30)
+  RolDT           Int       @default(1)
+  RolId           Int       @id @default(autoincrement()) @db.SmallInt
+  RolDesc         String    @db.VarChar(50)
+  RolPaginaHomeId Int       @db.SmallInt
+  RolPermisosId   Int
+  RolClassId      Int       @db.SmallInt
+  PaginaHome      Pagina    @relation(fields: [RolPaginaHomeId], references: [PaginaId], onDelete: NoAction, onUpdate: NoAction)
+  Usuario         Usuario[]
+
+  @@schema("Sistema")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model Usuario {
+  UsuarioUsys              String         @default(dbgenerated("CURRENT_USER")) @db.VarChar(50)
+  UsuarioDT                DateTime       @default(now()) @db.Timestamp(6)
+  UsuarioId                Int            @id @default(autoincrement()) @db.SmallInt
+  UsuarioDesc              String         @db.VarChar(30)
+  Contrasena               String         @map("Contraseña") @db.VarChar(100) // hash bcrypt (incluye el salt)
+  UsuarioRolId             Int            @db.SmallInt
+  UsuarioPermisosId        Int            @db.SmallInt
+  UsuarioNombreId          Int
+  UsuarioPermisosPaginasId Int
+  UsuarioPaginaHomeId      Int            @db.SmallInt
+  Nombre                   NombrePersonal @relation(fields: [UsuarioNombreId], references: [NombrePersonalId], onDelete: NoAction, onUpdate: NoAction)
+  PaginaHome               Pagina         @relation(fields: [UsuarioPaginaHomeId], references: [PaginaId], onDelete: NoAction, onUpdate: NoAction)
+  Permiso                  Permiso        @relation(fields: [UsuarioPermisosId], references: [PermisoId], onDelete: NoAction, onUpdate: NoAction)
+  Rol                      Rol            @relation(fields: [UsuarioRolId], references: [RolId], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("Sistema")
+}

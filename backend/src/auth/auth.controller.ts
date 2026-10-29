@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
-import { Usuario } from '../sistema/entities/usuario.entity';
-import { UsuariosService } from '../sistema/usuarios.service';
+import { Perfil, UsuariosService } from '../usuarios/usuarios.service';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import { LoginDto } from './dto/login.dto';
@@ -18,7 +17,7 @@ export class AuthController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async profile(@CurrentUser() usuario: Usuario) {
-    return { ...usuario, Paginas: await this.usuarios.paginasPermitidas(usuario) };
+  async profile(@CurrentUser() usuario: Perfil) {
+    return { ...usuario, Paginas: await this.usuarios.paginasPermitidas(usuario.UsuarioPermisosPaginasId) };
   }
 }

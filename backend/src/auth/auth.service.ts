@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { UsuariosService } from '../sistema/usuarios.service';
+import { UsuariosService } from '../usuarios/usuarios.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './jwt.strategy';
 
@@ -11,7 +11,7 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const usuario = await this.usuarios.findByDescWithPassword(dto.usuario);
-    if (!usuario || !(await bcrypt.compare(dto.password, usuario.Contraseña))) {
+    if (!usuario || !(await bcrypt.compare(dto.password, usuario.Contrasena))) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
     const payload: JwtPayload = { sub: usuario.UsuarioId, usuario: usuario.UsuarioDesc, rolId: usuario.UsuarioRolId };
