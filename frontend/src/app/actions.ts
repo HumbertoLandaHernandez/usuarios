@@ -1,43 +1,24 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { api, ApiError, User } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { clearToken, setToken } from '@/lib/session';
 
-export type FormState = { error?: string; values?: { name?: string; email?: string } } | undefined;
+export type FormState = { error?: string; usuario?: string } | undefined;
 
-type AuthResponse = { access_token: string; user: User };
-
-async function authenticate(path: string, payload: Record<string, FormDataEntryValue | null>): Promise<FormState> {
+export async function login(_: FormState, formData: FormData): Promise<FormState> {
+  const usuario = formData.get('usuario')?.toString() ?? '';
   try {
-    const { access_token } = await api<AuthResponse>(path, {
+    const { access_token } = await api<{ access_token: string }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ usuario, password: formData.get('password') }),
     });
     await setToken(access_token);
   } catch (e) {
-    return {
-      error: e instanceof ApiError ? e.message : 'No se pudo conectar con el servidor',
-      // Devolvemos lo escrito para no vaciar el formulario (la contraseña no)
-      values: { name: payload.name?.toString(), email: payload.email?.toString() },
-    };
+    // Devolvemos el usuario para no vaciar el formulario (la contraseña no)
+    return { error: e instanceof ApiError ? e.message : 'No se pudo conectar con el servidor', usuario };
   }
   redirect('/dashboard');
-}
-
-export async function login(_: FormState, formData: FormData) {
-  return authenticate('/auth/login', {
-    email: formData.get('email'),
-    password: formData.get('password'),
-  });
-}
-
-export async function register(_: FormState, formData: FormData) {
-  return authenticate('/auth/register', {
-    name: formData.get('name'),
-    email: formData.get('email'),
-    password: formData.get('password'),
-  });
 }
 
 export async function logout() {

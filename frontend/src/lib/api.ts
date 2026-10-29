@@ -3,7 +3,18 @@ import { getToken } from './session';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:3001';
 
-export type User = { id: string; email: string; name: string; createdAt: string };
+export type Pagina = { PaginaId: number; PaginaDesc: string; Descripcion: string };
+
+export type Usuario = {
+  UsuarioId: number;
+  UsuarioDesc: string;
+  UsuarioDT: string;
+  Rol: { RolId: number; RolDesc: string };
+  Permiso: { PermisoId: number; PermisoDesc: string };
+  Nombre: { NombrePersonalId: number; NombrePersonalDesc: string };
+  PaginaHome: Pagina;
+  Paginas: Pagina[];
+};
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -33,7 +44,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export async function getCurrentUser() {
   try {
-    return await api<User>('/auth/profile');
+    return await api<Usuario>('/auth/profile');
   } catch {
     return null;
   }

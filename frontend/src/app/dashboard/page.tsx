@@ -18,9 +18,19 @@ async function Profile() {
 
   return (
     <div className="card">
-      <h1>Hola, {user.name} 👋</h1>
-      <p>Email: {user.email}</p>
-      <p>Miembro desde: {new Date(user.createdAt).toLocaleDateString('es')}</p>
+      <h1>Hola, {user.Nombre.NombrePersonalDesc} 👋</h1>
+      <p>
+        Usuario: <b>{user.UsuarioDesc}</b> · Rol: <b>{user.Rol.RolDesc}</b> · Permiso: <b>{user.Permiso.PermisoDesc}</b>
+      </p>
+      <p>Página de inicio: {user.PaginaHome.Descripcion}</p>
+      <h2>Páginas permitidas</h2>
+      <ul>
+        {user.Paginas.map((p) => (
+          <li key={p.PaginaId}>
+            {p.Descripcion} <code>{p.PaginaDesc}</code>
+          </li>
+        ))}
+      </ul>
       <form action={logout}>
         <button>Cerrar sesión</button>
       </form>

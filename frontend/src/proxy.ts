@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const protectedRoutes = ['/dashboard'];
-const authRoutes = ['/login', '/register'];
+const authRoutes = ['/login'];
 
 // Chequeo optimista: solo mira si existe la cookie. La validación real del JWT la hace Nest.
 export default function proxy(req: NextRequest) {

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
+import { SistemaModule } from './sistema/sistema.module';
 
 @Module({
   imports: [
@@ -17,11 +17,11 @@ import { UsersModule } from './users/users.module';
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
         autoLoadEntities: true,
-        // Solo para desarrollo: en producción usa migraciones
-        synchronize: true,
+        // El esquema lo crean los scripts de /database; TypeORM no lo modifica
+        synchronize: false,
       }),
     }),
-    UsersModule,
+    SistemaModule,
     AuthModule,
   ],
 })
